@@ -5,7 +5,7 @@ module Piggybak
       @cart = Piggybak::Cart.new(request.cookies["cart"])
 
       if request.post?
-        logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
+        logger = Logger.new(STDOUT)
 
         begin
           ActiveRecord::Base.transaction do
