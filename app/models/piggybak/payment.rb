@@ -5,12 +5,13 @@ module Piggybak
     belongs_to :line_item
 
     validates :status, presence: true
-    validates :payment_method_id, presence: true
-    validates :month, presence: true
-    validates :year, presence: true
+    validates_presence_of :stripe_token, :on => :create
+
 
     attr_accessor :number
     attr_accessor :verification_value
+    attr_accessor :stripe_token
+
     
     def status_enum
       ["paid"]
@@ -35,23 +36,45 @@ module Piggybak
 
     def process(order)
       return true if !self.new_record?
-
-      ActiveMerchant::Billing::Base.mode = Piggybak.config.activemerchant_mode
-
-      payment_gateway = self.payment_method.klass.constantize
-      gateway = payment_gateway::KLASS.new(self.payment_method.key_values)
-      p_credit_card = ActiveMerchant::Billing::CreditCard.new(self.credit_card)
-      gateway_response = gateway.authorize(order.total_due*100, p_credit_card, :address => order.avs_address)
-      if gateway_response.success?
-        self.attributes = { :transaction_id => payment_gateway.transaction_id(gateway_response),
-                            :masked_number => self.number.mask_cc_number }
-        gateway.capture(order.total_due*100, gateway_response.authorization, { :credit_card => p_credit_card } )
+      logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
+      calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
+      Stripe.api_key = calculator.secret_key
+      begin
+        charge = Stripe::Charge.create({
+                    :amount => (order.total_due * 100).to_i,
+                    :card => self.stripe_token,
+                    :currency => "usd"
+                  })
+        
+        self.attributes = { :transaction_id => charge.id,
+                            :masked_number => charge.card.last4 }
         return true
-      else
-        self.errors.add :payment_method_id, gateway_response.message
+      rescue Stripe::CardError, Stripe::InvalidRequestError => e
+        logger.info "#{Stripe.api_key}#{e.message}"
+        self.errors.add :payment_method_id, e.message
         return false
       end
     end
+
+    # def process(order)
+    #   return true if !self.new_record?
+
+    #   ActiveMerchant::Billing::Base.mode = Piggybak.config.activemerchant_mode
+
+    #   payment_gateway = self.payment_method.klass.constantize
+    #   gateway = payment_gateway::KLASS.new(self.payment_method.key_values)
+    #   p_credit_card = ActiveMerchant::Billing::CreditCard.new(self.credit_card)
+    #   gateway_response = gateway.authorize(order.total_due*100, p_credit_card, :address => order.avs_address)
+    #   if gateway_response.success?
+    #     self.attributes = { :transaction_id => payment_gateway.transaction_id(gateway_response),
+    #                         :masked_number => self.number.mask_cc_number }
+    #     gateway.capture(order.total_due*100, gateway_response.authorization, { :credit_card => p_credit_card } )
+    #     return true
+    #   else
+    #     self.errors.add :payment_method_id, gateway_response.message
+    #     return false
+    #   end
+    # end
 
     # Note: It is not added now, because for methods that do not store
     # user profiles, a credit card number must be passed

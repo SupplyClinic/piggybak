@@ -32,8 +32,7 @@ module Piggybak
         @email_sender = "support@piggybak.org"
         @order_cc = nil
 
-        @payment_calculators = ["::Piggybak::PaymentCalculator::Fake",
-                                "::Piggybak::PaymentCalculator::AuthorizeNet"]
+        @payment_calculators = ["::Piggybak::PaymentCalculator::Stripe"]
         @shipping_calculators = ["::Piggybak::ShippingCalculator::FlatRate",
                                  "::Piggybak::ShippingCalculator::Free",
                                  "::Piggybak::ShippingCalculator::Range"]
