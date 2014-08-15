@@ -94,5 +94,24 @@ module Piggybak
     def empty?
       self.sellables.inject(0) { |nitems, item| nitems + item[:quantity] } == 0      
     end
+
+    def destination
+      country = Piggybak::Country.find(self.extra_data[:country_id])
+      state = Piggybak::State.find(self.extra_data[:state_id])
+
+      location = ActiveMerchant::Shipping::Location.new(:country => country.abbr,
+                               :state => state ? state.abbr : self.extra_data[:state_id],
+                               :city => self.extra_data[:city],
+                               :zip => self.extra_data[:zip])
+
+      location      
+    end
+
+    def cache_key
+      cart_info = self.items.map { |i| "#{i[:variant].id}-#{i[:quantity]}" }.join('--')
+      self.extra_data ||= {}
+      cache_key = "#{cart_info}-#{self.extra_data[:country_id]}-#{self.extra_data[:state_id]}-#{self.extra_data[:zip]}-#{self.extra_data[:city]}"
+      Digest::MD5.hexdigest(cache_key)
+    end
   end
 end

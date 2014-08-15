@@ -217,5 +217,16 @@ module Piggybak
     def admin_label
       "Order ##{self.id}"    
     end
+
+    def destination
+      address = self.shipping_address
+  
+      location = ActiveMerchant::Shipping::Location.new(:country => address.country.abbr,
+                                   :state => address.state ? address.state.abbr : address.state_id,
+                                   :city => address.city,
+                                   :zip => address.zip)
+  
+      location
+    end
   end
 end
