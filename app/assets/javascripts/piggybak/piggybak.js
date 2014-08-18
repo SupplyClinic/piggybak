@@ -126,16 +126,19 @@ var piggybak = {
 	},
 	update_totals: function() {
 		var subtotal = parseFloat($('#subtotal_total').data('total'));
+		$('#tax_total').removeClass('loading-spinner');
 		$('#tax_total').html('$' + tax_total.toFixed(2));
 		var shipping_total = 0;
 		if($('#shipping select option:selected').length) {
 			shipping_total = $('#shipping select option:selected').data('rate');
 		}
+		$('#shipping_total').removeClass('loading-spinner');
 		$('#shipping_total').html('$' + shipping_total.toFixed(2));
 		var order_total = parseFloat((subtotal + tax_total + shipping_total).toFixed(2));
 		$.each($('.extra_totals'), function(i, el) {
 			order_total += parseFloat($(el).html().replace(/\$/, ''));
 		});
+		$('#order_total').removeClass('loading-spinner');
 		$('#order_total').html('$' + order_total.toFixed(2));
 		return order_total;
 	},
