@@ -221,10 +221,11 @@ module Piggybak
     def destination
       address = self.shipping_address
   
-      location = ActiveMerchant::Shipping::Location.new(:country => address.country.abbr,
-                                   :state => address.state ? address.state.name : address.state_id,
-                                   :city => address.city,
-                                   :zip => address.zip)
+      location = ActiveMerchant::Shipping::Location.new( :company_name => 'Supply Clinic Customer',
+                                  :country => address.country.abbr,
+                                  :state => address.state ? address.state.name : address.state_id,
+                                  :city => address.city,
+                                  :zip => address.zip)
   
       location
     end

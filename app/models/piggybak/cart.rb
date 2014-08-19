@@ -99,7 +99,8 @@ module Piggybak
       country = Piggybak::Country.find(self.extra_data[:country_id])
       state = Piggybak::State.find(self.extra_data[:state_id])
 
-      location = ActiveMerchant::Shipping::Location.new(:country => country.abbr,
+      location = ActiveMerchant::Shipping::Location.new(:company_name => 'Supply Clinic Customer',
+                               :country => country.abbr,
                                :state => state ? state.name : self.extra_data[:state_id],
                                :city => self.extra_data[:city],
                                :zip => self.extra_data[:zip])
