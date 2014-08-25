@@ -120,6 +120,10 @@ module Piggybak
         end
       end
 
+      # Add processing fee
+      self.total = self.total_with_processing_fee(self.total)
+      self.total_due = self.total_with_processing_fee(self.total_due)
+
       # Postprocess payment last
       self.line_items.payments.each do |line_item|
         method = "postprocess_payment"
@@ -131,6 +135,14 @@ module Piggybak
       end
 
       true
+    end
+
+    def total_with_processing_fee(total)
+      new_total = total / BigDecimal.new("0.971")
+    end
+
+    def processing_fee
+      self.total * BigDecimal.new("0.029")
     end
 
     def record_order_note
