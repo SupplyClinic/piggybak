@@ -36,6 +36,7 @@ module Piggybak
 
     def process(order)
       return true if !self.new_record?
+      logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
       calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
       Stripe.api_key = calculator.secret_key
       begin
@@ -49,6 +50,7 @@ module Piggybak
                             :masked_number => charge.card.last4 }
         return true
       rescue Stripe::CardError, Stripe::InvalidRequestError => e
+        logger.info "#{Stripe.api_key}#{e.message}"
         self.errors.add :payment_method_id, e.message
         return false
       end
