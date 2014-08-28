@@ -10,6 +10,7 @@ module Piggybak
 
     attr_accessor :number
     attr_accessor :verification_value
+    attr_accessor :stripe_customer_id
     attr_accessor :stripe_token
 
     
@@ -42,6 +43,7 @@ module Piggybak
       begin
         charge = Stripe::Charge.create({
                     :amount => (order.total_due * 100).to_i,
+                    :customer => self.stripe_customer_id,
                     :card => self.stripe_token,
                     :currency => "usd"
                   })

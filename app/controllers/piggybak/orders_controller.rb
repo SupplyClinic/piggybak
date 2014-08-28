@@ -155,7 +155,7 @@ module Piggybak
     private
     def orders_params
       nested_attributes = [shipment_attributes: [:shipping_method_id], 
-                           payment_attributes: [:number, :verification_value, :month, :year, :stripe_token]].first.merge(Piggybak.config.additional_line_item_attributes)
+                           payment_attributes: [:number, :verification_value, :month, :year, :stripe_token, :stripe_customer_id]].first.merge(Piggybak.config.additional_line_item_attributes)
       line_item_attributes = [:sellable_id, :price, :unit_price, :description, :quantity, :line_item_type, nested_attributes]
       params.require(:order).permit(:user_id, :email, :phone, :ip_address,
                                     billing_address_attributes: [:firstname, :lastname, :address1, :location, :address2, :city, :state_id, :zip, :country_id],
