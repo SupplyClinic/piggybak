@@ -41,12 +41,20 @@ module Piggybak
       calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
       Stripe.api_key = calculator.secret_key
       begin
-        charge = Stripe::Charge.create({
-                    :amount => (order.total_due * 100).to_i,
-                    :customer => self.stripe_customer_id,
-                    :card => self.stripe_token,
-                    :currency => "usd"
-                  })
+        if self.stripe_customer_id
+          charge = Stripe::Charge.create({
+                      :amount => (order.total_due * 100).to_i,
+                      :customer => self.stripe_customer_id,
+                      :card => self.stripe_token,
+                      :currency => "usd"
+                    })
+        else 
+          charge = Stripe::Charge.create({
+                      :amount => (order.total_due * 100).to_i,
+                      :card => self.stripe_token,
+                      :currency => "usd"
+                    })
+        end
         
         self.attributes = { :transaction_id => charge.id,
                             :masked_number => charge.card.last4 }
