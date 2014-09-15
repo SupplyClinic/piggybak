@@ -7,7 +7,7 @@ module Piggybak
       @order = order
 
       mail(:to => order.email,
-           :subject => "Order ##{sprintf '%06d', @order.id}")
+           :subject => "Order Confirmation ##{sprintf '%06d', @order.id}")
     end
   end
 end
