@@ -16,4 +16,18 @@ class Piggybak::Sellable < ActiveRecord::Base
   def update_inventory(purchased)
     self.update_attribute(:quantity, self.quantity + purchased)
   end
+
+  def vendor_specific_item
+    if self.item_type == "VendorSpecificItem" 
+      return self.item
+    elsif self.item_type == "PiggybakVariants::Variant"
+      variant = self.item
+      if variant.item_type == "VendorSpecificItem"
+        return variant.item
+      else
+        return nil
+      end    
+    end
+  end
+  
 end
