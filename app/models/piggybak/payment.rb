@@ -38,31 +38,37 @@ module Piggybak
     def process(order)
       return true if !self.new_record?
       logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
-      calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
-      Stripe.api_key = calculator.secret_key
-      begin
-        if self.stripe_customer_id
-          charge = Stripe::Charge.create({
-                      :amount => (order.total_due * 100).to_i,
-                      :customer => self.stripe_customer_id,
-                      :card => self.stripe_token,
-                      :currency => "usd"
-                    })
-        else 
-          charge = Stripe::Charge.create({
-                      :amount => (order.total_due * 100).to_i,
-                      :card => self.stripe_token,
-                      :currency => "usd"
-                    })
-        end
-        
-        self.attributes = { :transaction_id => charge.id,
-                            :masked_number => charge.card.last4 }
+      if order.total_due == 0
+        self.attributes = { :transaction_id => "free of charge",
+                            :masked_number => "N/A" }
         return true
-      rescue Stripe::CardError, Stripe::InvalidRequestError => e
-        logger.info "#{Stripe.api_key}#{e.message}"
-        self.errors.add :payment_method_id, e.message
-        return false
+      else
+        calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
+        Stripe.api_key = calculator.secret_key
+        begin
+          if self.stripe_customer_id
+            charge = Stripe::Charge.create({
+                        :amount => (order.total_due * 100).to_i,
+                        :customer => self.stripe_customer_id,
+                        :card => self.stripe_token,
+                        :currency => "usd"
+                      })
+          else 
+            charge = Stripe::Charge.create({
+                        :amount => (order.total_due * 100).to_i,
+                        :card => self.stripe_token,
+                        :currency => "usd"
+                      })
+          end
+          
+          self.attributes = { :transaction_id => charge.id,
+                              :masked_number => charge.card.last4 }
+          return true
+        rescue Stripe::CardError, Stripe::InvalidRequestError => e
+          logger.info "#{Stripe.api_key}#{e.message}"
+          self.errors.add :payment_method_id, e.message
+          return false
+        end
       end
     end
 
