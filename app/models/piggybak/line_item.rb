@@ -99,6 +99,9 @@ module Piggybak
         self.order.total_due = 0
         return true
       else
+        self.payment.errors.each do |error_name, error_value|
+          self.errors.add error_name, error_value
+        end
         return false
       end
     end
