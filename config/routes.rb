@@ -4,6 +4,7 @@ Piggybak::Engine.routes.draw do
   post '/cart/add' => 'cart#add', as: :cart_add
   post '/cart/update' => 'cart#update', as: :cart_update
   delete '/cart/remove/:item' => 'cart#remove', as: :remove_item
+  delete '/cart' => 'cart#clear', as: :cart_clear
 
   # order actions
   root 'orders#submit', as: :orders, via: [:get, :post]
