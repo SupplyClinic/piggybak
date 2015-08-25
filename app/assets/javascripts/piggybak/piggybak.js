@@ -2,20 +2,34 @@ var tax_total = 0;
 var shipping_els;
 var page_load = 1;
 var shipping_field;
+var order_type;
+var order_type_payment;
+var form_name;
 
 $(function() {
-	if($('form#new_order').size() == 0) {
+  if (typeof is_subscription !== 'undefined') {
+    order_type = 'subscription_';
+    order_type_payment = 'subscription_order_';
+    form_name = '_subscription';
+  }
+  else {
+    order_type = '';
+    order_type_payment = '';
+    form_name = '';
+  }
+
+	if($('form#new_order' + form_name).size() == 0) {
 		return;
 	}
-	shipping_field = $('#order_line_items_attributes_0_shipment_attributes_shipping_method_id');
+	shipping_field = $('#order_' + order_type_payment + 'line_items_attributes_0_shipment_attributes_shipping_method_id');
 	piggybak.initialize_listeners();
-	piggybak.update_shipping_options($('#order_shipping_address_attributes_state_id'), function() {
-		$('#order_shipments_attributes_0_shipping_method_id').val(previous_shipping);
+	piggybak.update_shipping_options($('#order_' + order_type + 'shipping_address_attributes_state_id'), function() {
+		$('#order_' + order_type + 'shipments_attributes_0_shipping_method_id').val(previous_shipping);
 	});
 	piggybak.update_tax();
-	$('#new_order').validate({
+	$('#new_order' + form_name).validate({
 		submitHandler: function(form) {
-      var submit = $($('#new_order input[type=submit]'));
+      var submit = $($('#new_order' + form_name + ' input[type=submit]'));
       submit.prop('disabled',true);
       submit.attr('value','Processing...');
 			form.submit()
@@ -24,12 +38,12 @@ $(function() {
 });
 
 var piggybak = {
-	shipping_els: '#order_shipping_address_attributes_state_id,#order_shipping_address_attributes_country_id,#order_shipping_address_attributes_zip',
+	shipping_els: '#order_' + order_type + 'shipping_address_attributes_state_id,#order_' + order_type + 'shipping_address_attributes_country_id,#order_' + order_type + 'shipping_address_attributes_zip',
 	initialize_listeners: function() {
 		$(document).on('change', piggybak.shipping_els, function() {
 			piggybak.update_shipping_options($(this));
 		});
-		$(document).on('change', '#order_billing_address_attributes_state_id', function() {
+		$(document).on('change', '#order_' + order_type + 'billing_address_attributes_state_id', function() {
 			piggybak.update_tax();
 		});
 		$('#shipping select').change(function() {
@@ -37,7 +51,7 @@ var piggybak = {
 		});
 		$('#shipping_address #copy').on('click', function() {
 			piggybak.copy_from_billing();
-			piggybak.update_shipping_options($('#order_shipping_address_attributes_state_id'));
+			piggybak.update_shipping_options($('#order_' + order_type + 'shipping_address_attributes_state_id'));
 			return false;
 		});
 		return;
@@ -47,11 +61,11 @@ var piggybak = {
 			var id = $(j).attr('id').replace(/billing_address/, 'shipping_address');
 			$('#' + id).val($(j).val());	
 		});
-		var country = $('#order_billing_address_attributes_country_id').val();
-		$('#order_shipping_address_attributes_country_id').val(country);
+		var country = $('#order_' + order_type + 'billing_address_attributes_country_id').val();
+		$('#order_' + order_type + 'shipping_address_attributes_country_id').val(country);
 		piggybak_states.update_state_option('shipping', function() {
-			var state = $('#order_billing_address_attributes_state_id').val();
-			$('#order_shipping_address_attributes_state_id').val(state);
+			var state = $('#order_' + order_type + 'billing_address_attributes_state_id').val();
+			$('#order_' + order_type + 'shipping_address_attributes_state_id').val(state);
 		});
 		$('#shipping_address input').valid();
 	},
@@ -110,7 +124,7 @@ var piggybak = {
 		});
 		$('#billing_address input, #billing_address select').each(function(i, j) {
 			var id = $(j).attr('id');
-			id = id.replace("order_billing_address_attributes_", '');
+			id = id.replace("order_" + order_type + "billing_address_attributes_", '');
 			billing_data[id] = $(j).val();	
 		});
 		$.ajax({
@@ -144,7 +158,7 @@ var piggybak = {
 		$('#shipping_address input, #shipping_address select').each(function(i, j) {
 			var id = $(j).attr('id');
 			if(typeof(id) !== 'undefined') {
-				id = id.replace("order_shipping_address_attributes_", '');
+				id = id.replace("order_" + order_type + "shipping_address_attributes_", '');
 				if($(j).is(':checkbox')) {
 					shipping_data[id] = $(j).is(':checked');
 				} else {

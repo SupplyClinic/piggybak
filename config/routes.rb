@@ -12,6 +12,7 @@ Piggybak::Engine.routes.draw do
   get '/orders/shipping' => 'orders#shipping', as: :orders_shipping
   get '/orders/tax' => 'orders#tax', as: :orders_tax
   get '/orders/geodata' => 'orders#geodata', as: :orders_geodata
+  post '/subscription/new' => 'orders#create_subscription', as: :create_subscription
 
   # list orders
   get '/orders' => 'orders#list', as: :orders_list
