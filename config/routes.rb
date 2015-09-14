@@ -8,6 +8,7 @@ Piggybak::Engine.routes.draw do
 
   # order actions
   root 'orders#submit', as: :orders, via: [:get, :post]
+  post '/shipping' => 'orders#calc_tax_and_shipping', as: :tax_and_shipping
   get '/receipt' => 'orders#receipt', as: :receipt
   get '/orders/shipping' => 'orders#shipping', as: :orders_shipping
   get '/orders/tax' => 'orders#tax', as: :orders_tax
