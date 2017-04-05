@@ -63,7 +63,7 @@ module Piggybak
           end
           
           self.attributes = { :transaction_id => charge.id,
-                              :masked_number => charge.card.last4 }
+                              :masked_number => charge.source.last4 }
           return true
         rescue Stripe::CardError, Stripe::InvalidRequestError => e
           logger.info "#{Stripe.api_key}#{e.message}"
