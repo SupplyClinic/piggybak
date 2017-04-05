@@ -50,14 +50,14 @@ module Piggybak
             charge = Stripe::Charge.create({
                         :amount => (order.total_due * 100).to_i,
                         :customer => self.stripe_customer_id,
-                        :card => self.stripe_token,
+                        :source => self.stripe_token,
                         :currency => "usd",
                         :capture => !order.dont_capture
                       })
           else 
             charge = Stripe::Charge.create({
                         :amount => (order.total_due * 100).to_i,
-                        :card => self.stripe_token,
+                        :source => self.stripe_token,
                         :currency => "usd"
                       })
           end
