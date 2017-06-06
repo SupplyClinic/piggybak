@@ -38,27 +38,32 @@ module Piggybak
     def process(order)
       return true if !self.new_record?
       logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
-      if order.total_due == 0
+      total_due_integer = (order.total_due * 100).to_i
+      if total_due_integer == 0
         self.attributes = { :transaction_id => "free of charge",
                             :masked_number => "N/A" }
         return true
+      elsif total_due_integer < 100
+        self.errors.add :payment_method_id, "Supply Clinic unfortunately can't process orders less than a dollar (unless they're completely free of charge). Please adjust your cart size accordingly."
+        return false
       else
         calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
         Stripe.api_key = calculator.secret_key
         begin
           if self.stripe_customer_id
             charge = Stripe::Charge.create({
-                        :amount => (order.total_due * 100).to_i,
+                        :amount => total_due_integer,
                         :customer => self.stripe_customer_id,
                         :source => self.stripe_token,
                         :currency => "usd",
-                        :capture => !order.dont_capture
+                        :capture => false
                       })
           else 
             charge = Stripe::Charge.create({
-                        :amount => (order.total_due * 100).to_i,
+                        :amount => total_due_integer,
                         :source => self.stripe_token,
-                        :currency => "usd"
+                        :currency => "usd",
+                        :capture => false
                       })
           end
           
