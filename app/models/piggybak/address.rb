@@ -24,6 +24,9 @@ module Piggybak
 
     def admin_label
       address = "#{self.firstname} #{self.lastname}<br />"
+      if self.business_name && self.business_name != ''
+        address += "#{self.business_name}<br />"
+      end
       address += "#{self.address1}<br />"
       if self.address2 && self.address2 != ''
         address += "#{self.address2}<br />"
