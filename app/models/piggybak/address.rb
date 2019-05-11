@@ -43,12 +43,6 @@ module Piggybak
 
     # TODO: Fix this. It isn't working.
     def document_address_changes
-      if self.order_billing.present? && self.changed?
-        self.order_billing.recorded_changes << self.formatted_changes
-      end
-      if self.order_shipping.present? && self.changed?
-        self.order_shipping.recorded_changes << self.formatted_changes
-      end
     end
   end
 end
