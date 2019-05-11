@@ -11,17 +11,21 @@ module Piggybak
     end
 
     def document_new_item
-      self.order.recorded_changes << self.new_destroy_changes("added")
+      if self.order
+        self.order.recorded_changes << self.new_destroy_changes("added")
+      end
     end
 
     def document_nested_change
-      if self.changed?
+      if self.changed? && self.order
         self.order.recorded_changes << self.formatted_changes
       end
     end
 
     def document_destroy_item
-      self.order.recorded_changes << self.new_destroy_changes("destroyed")
+      if self.order
+        self.order.recorded_changes << self.new_destroy_changes("destroyed")
+      end
     end
   end
 end
