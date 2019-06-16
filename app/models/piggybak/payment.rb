@@ -15,7 +15,7 @@ module Piggybak
 
     
     def status_enum
-      ["paid"]
+      ["paid", "pending"]
     end
 
     def month_enum
@@ -39,7 +39,7 @@ module Piggybak
       return true if !self.new_record?
       logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
       total_due_integer = (order.total_due * 100).to_i
-      if total_due_integer == 0
+      if (total_due_integer == 0) || order.request
         self.attributes = { :transaction_id => "free of charge",
                             :masked_number => "N/A" }
         return true
@@ -77,26 +77,6 @@ module Piggybak
         end
       end
     end
-
-    # def process(order)
-    #   return true if !self.new_record?
-
-    #   ActiveMerchant::Billing::Base.mode = Piggybak.config.activemerchant_mode
-
-    #   payment_gateway = self.payment_method.klass.constantize
-    #   gateway = payment_gateway::KLASS.new(self.payment_method.key_values)
-    #   p_credit_card = ActiveMerchant::Billing::CreditCard.new(self.credit_card)
-    #   gateway_response = gateway.authorize(order.total_due*100, p_credit_card, :address => order.avs_address)
-    #   if gateway_response.success?
-    #     self.attributes = { :transaction_id => payment_gateway.transaction_id(gateway_response),
-    #                         :masked_number => self.number.mask_cc_number }
-    #     gateway.capture(order.total_due*100, gateway_response.authorization, { :credit_card => p_credit_card } )
-    #     return true
-    #   else
-    #     self.errors.add :payment_method_id, gateway_response.message
-    #     return false
-    #   end
-    # end
 
     # Note: It is not added now, because for methods that do not store
     # user profiles, a credit card number must be passed
