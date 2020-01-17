@@ -39,7 +39,7 @@ module Piggybak
       return true if !self.new_record?
       logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
       total_due_integer = (order.total_due * 100).to_i
-      if (total_due_integer == 0) || order.request
+      if (total_due_integer == 0)
         self.attributes = { :transaction_id => "free of charge",
                             :masked_number => "N/A" }
         return true
