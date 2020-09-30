@@ -43,6 +43,10 @@ module Piggybak
         self.attributes = { :transaction_id => "free of charge",
                             :masked_number => "N/A" }
         return true
+      elsif order.user && order.user.payment_method != "card"
+        self.attributes = { :transaction_id => "credit",
+                            :masked_number => "N/A" }
+        return true
       elsif total_due_integer < 100
         self.errors.add :payment_method_id, "Supply Clinic unfortunately can't process orders less than a dollar (unless they're completely free of charge). Please adjust your cart size accordingly."
         return false
