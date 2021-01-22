@@ -11,9 +11,9 @@ module Piggybak
 
     default_scope { order('created_at ASC') }
 
-    after_create :decrease_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable' && !line_item.sellable.unlimited_inventory }
-    after_destroy :increase_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable' && !line_item.sellable.unlimited_inventory }
-    after_update :update_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable' && !line_item.sellable.unlimited_inventory }
+    after_create :decrease_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable'}
+    after_destroy :increase_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable'}
+    after_update :update_inventory, :if => Proc.new { |line_item| line_item.line_item_type == 'sellable'}
 
     after_initialize :initialize_line_item
     before_validation :preprocess
