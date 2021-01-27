@@ -14,7 +14,12 @@ class Piggybak::Sellable < ActiveRecord::Base
   end
 
   def update_inventory(purchased)
-    self.update_attribute(:quantity, self.quantity + purchased)
+    new_quantity = self.quantity + purchased
+    if new_quantity < 0
+      new_quantity = 0
+      self.vendor_specific_item.update(backordered: true)
+    end
+    self.update_attribute(:quantity, new_quantity)
   end
 
   def vendor_specific_item
