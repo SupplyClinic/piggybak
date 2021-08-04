@@ -34,5 +34,22 @@ class Piggybak::Sellable < ActiveRecord::Base
       end    
     end
   end
+
+  def set_vsi_to_backordered_async
+    vsi = self.item
+    vsi.reload
+    if vsi.is_excluded_from_slu == true && ["backordered", "out of stock", "special order"].include?(vsi.visibility_when_not_on_slu)
+      vsi.backordered = true
+      vsi.save
+      vsi.item.calculate_default_display_price
+    elsif self.quantity == 0
+      if ["backordered", "out of stock", "special order"].include?(vsi.visibility_when_qty_0)
+        vsi.backordered = true
+        vsi.save
+      end
+      vsi.item.calculate_default_display_price
+    end
+  end
+
   
 end
