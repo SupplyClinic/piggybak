@@ -17,7 +17,7 @@ class Piggybak::Sellable < ActiveRecord::Base
     new_quantity = self.quantity + purchased
     if new_quantity < 0
       new_quantity = 0
-      self.vendor_specific_item.update(backordered: true)
+      self.vendor_specific_item.set_backorder(new_quantity)
     end
     self.update_attribute(:quantity, new_quantity)
   end
@@ -41,13 +41,11 @@ class Piggybak::Sellable < ActiveRecord::Base
     if vsi.is_excluded_from_slu == true && ["backordered", "out of stock", "special order"].include?(vsi.visibility_when_not_on_slu)
       vsi.backordered = true
       vsi.save
-      vsi.item.calculate_default_display_price
     elsif self.quantity == 0
       if ["backordered", "out of stock", "special order"].include?(vsi.visibility_when_qty_0)
         vsi.backordered = true
         vsi.save
       end
-      vsi.item.calculate_default_display_price
     end
   end
 
