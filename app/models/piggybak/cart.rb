@@ -94,5 +94,74 @@ module Piggybak
     def empty?
       self.sellables.inject(0) { |nitems, item| nitems + item[:quantity] } == 0      
     end
+
+    def destination
+      country = Piggybak::Country.find(self.extra_data[:country_id])
+      state = Piggybak::State.find(self.extra_data[:state_id])
+
+      destination = {}
+      destination[:name]     = "Supply Clinic Customer"
+      destination[:address1] = self.extra_data[:address1]
+      destination[:address2] = self.extra_data[:address2]
+      destination[:business_name] = self.extra_data[:business_name]
+      destination[:city]     = self.extra_data[:city]
+      destination[:state]    = state ? state.name : self.extra_data[:state_id]
+      destination[:zip]      = self.extra_data[:zip]
+      destination[:country]  = "US"
+      o_destination = Omniship::Address.new(destination)
+    end
+
+    def cache_key
+      cart_info = self.items.map { |i| "#{i[:variant].id}-#{i[:quantity]}" }.join('--')
+      self.extra_data ||= {}
+      cache_key = "#{cart_info}-#{self.extra_data[:country_id]}-#{self.extra_data[:state_id]}-#{self.extra_data[:zip]}-#{self.extra_data[:city]}"
+      Digest::MD5.hexdigest(cache_key)
+    end
+
+    def savings
+      savings = BigDecimal.new("0")
+      items.each do |item|
+        qty = item[:quantity]
+        unit_price = item[:sellable].price
+        msrp = item[:sellable].vendor_specific_item.item.msrp
+        if msrp && (msrp > unit_price)
+          sellable_savings = (msrp * qty) - (unit_price * qty)
+          savings += sellable_savings
+        end
+      end
+      savings
+    end
+
+    def update_quantities_for_special_price(user)
+      self.errors = []
+      new_sellables = []
+      self.sellables.each do |item|
+        if !item[:sellable].active
+          self.errors << ["Sorry, #{item[:sellable].description} is no longer for sale"]
+        elsif item[:sellable].unlimited_inventory || item[:sellable].quantity >= item[:quantity]
+          new_sellables << item
+        elsif item[:sellable].quantity == 0
+          self.errors << ["Sorry, #{item[:sellable].description} is no longer available"]
+        else
+          self.errors << ["Sorry, only #{item[:sellable].quantity} available for #{item[:sellable].description}"]
+          item[:quantity] = item[:sellable].quantity
+          new_sellables << item if item[:quantity] > 0
+        end
+      end
+      self.sellables = new_sellables
+      self.total = self.sellables.sum { |item| item[:quantity]*item[:sellable].situational_price(user) }
+    end
+
+    def valid_vendor?
+      self.errors = []
+      self.sellables.each do |item|
+        if item[:sellable].item.vendor.paused?
+          self.errors << ["Sorry, #{item[:sellable].item.vendor.name} is currently not selling on our platform"]
+        end
+      end
+      return false if self.errors.any?
+      true
+    end
+
   end
 end
