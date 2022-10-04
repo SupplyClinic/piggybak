@@ -17,7 +17,7 @@ module Piggybak
     end
 
     def document_nested_change
-      if self.changed? && self.order
+      if self.saved_changes? && self.order
         self.order.recorded_changes << self.formatted_changes
       end
     end

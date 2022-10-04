@@ -19,7 +19,7 @@ module Piggybak
 
     def formatted_changes
       text = "#{self.class.to_s.gsub(/Piggybak::/, '')} ##{self.id} changes:<br />"
-      self.changes.each do |k, v|
+      self.saved_changes.each do |k, v|
         if !["updated_at", "id", "billing_address_id", "shipping_address_id", "created_at", "sellable_id", "line_item_type", "unit_price", "sort"].include?(k)
           if v[0].is_a?(BigDecimal)
             text += "#{k}: $#{format("%.2f", v[0])} to $#{format("%.2f", v[1])}<br />"

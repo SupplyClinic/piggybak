@@ -142,12 +142,12 @@ module Piggybak
     end
 
     def update_inventory
-      if self.sellable_id != self.sellable_id_was
-        old_sellable = Sellable.where(id: self.sellable_id_was).first
-        old_sellable.update_inventory(self.quantity_was)
+      if self.sellable_id != self.sellable_id_before_last_save
+        old_sellable = Sellable.where(id: self.sellable_id_before_last_save).first
+        old_sellable.update_inventory(self.quantity_before_last_save)
         self.sellable.update_inventory(-1*self.quantity)
       else
-        quantity_diff = self.quantity_was - self.quantity
+        quantity_diff = self.quantity_before_last_save - self.quantity
         self.sellable.update_inventory(quantity_diff)
       end
     end

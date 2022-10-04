@@ -608,7 +608,7 @@ module Piggybak
     end
 
     def record_order_note
-      if self.changed? && !self.was_new_record
+      if self.saved_changes? && !self.was_new_record
         self.recorded_changes << self.formatted_changes
       end
 
