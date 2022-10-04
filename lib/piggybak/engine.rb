@@ -23,7 +23,7 @@ module Piggybak
           :strict => true
       end
     end
-    
+
     initializer "piggybak.add_helper" do |app|
       ActiveSupport.on_load :action_controller do
         helper :piggybak
@@ -58,12 +58,12 @@ module Piggybak
             # e.g. self.line_items.sellables
             # e.g. self.line_items.taxes
             define_method "#{k.to_s.pluralize}" do
-              proxy_association.select { |li| li.line_item_type == "#{k}" && !li.marked_for_destruction? }
+              proxy_association.load_target.select { |li| li.line_item_type == "#{k}" && !li.marked_for_destruction? }
             end
           end
         end
         # Define method subtotal on order, alias to sellable_charge
-        alias :subtotal :sellable_charge 
+        alias :subtotal :sellable_charge
       end
     end
 
@@ -104,9 +104,9 @@ module Piggybak
               label "Sellable"
               help "Required"
             end
-            field :price 
+            field :price
             field :quantity
-            field :description  
+            field :description
           end
         end
 
@@ -115,7 +115,7 @@ module Piggybak
           visible false
           edit do
             field :sku
-            field :description 
+            field :description
             field :price
             field :active
             field :quantity
@@ -187,12 +187,12 @@ module Piggybak
             field :status do
               visible do
                 !bindings[:object].new_record?
-              end 
-              read_only do 
+              end
+              read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
-             
+
             field :details do
               partial "order_details"
               help ""
@@ -227,7 +227,7 @@ module Piggybak
             end
           end
         end
-     
+
         config.model Piggybak::OrderNote do
           visible false
           list do
@@ -241,10 +241,10 @@ module Piggybak
               help ""
               visible do
                 !bindings[:object].new_record?
-              end 
-              read_only do 
+              end
+              read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
             field :user_id, :hidden do
               default_value do
@@ -254,11 +254,11 @@ module Piggybak
             field :note do
               visible do
                 bindings[:object].new_record?
-              end 
+              end
             end
           end
         end
- 
+
         config.model Piggybak::Address do
           label "Address"
           visible false
@@ -267,7 +267,7 @@ module Piggybak
             field :copy_from_billing do
               visible do
                 bindings[:object].respond_to?(:is_shipping) && bindings[:object].is_shipping
-              end 
+              end
               partial "copy_from_billing"
               label "Help"
               help "Copies address from billing to shipping."
@@ -289,7 +289,7 @@ module Piggybak
             end
           end
         end
-      
+
         config.model Piggybak::Shipment do
           visible false
 
@@ -304,7 +304,7 @@ module Piggybak
             end
           end
         end
-    
+
         config.model Piggybak::Adjustment do
           visible false
         end
@@ -314,47 +314,47 @@ module Piggybak
 
           edit do
             field :payment_method do
-              read_only do 
+              read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
             field :masked_number do
               help "Required"
               label "Number"
               visible do
                 !bindings[:object].new_record?
-              end 
+              end
               read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
             field :number do
               help "Required"
               visible do
                 bindings[:object].new_record?
-              end 
+              end
             end
             field :verification_value do
               help "Required"
               visible do
                 bindings[:object].new_record?
-              end 
+              end
             end
             field :month do
               label "Exp. Month"
-              read_only do 
+              read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
             field :year do
               label "Exp. Year"
-              read_only do 
+              read_only do
                 !bindings[:object].new_record?
-              end 
+              end
             end
           end
         end
-      
+
         config.model Piggybak::PaymentMethod do
           navigation_label "Configuration"
           weight 2
@@ -385,7 +385,7 @@ module Piggybak
             end
           end
         end
-      
+
         config.model Piggybak::ShippingMethod do
           navigation_label "Configuration"
           edit do
@@ -405,7 +405,7 @@ module Piggybak
             field :active
           end
         end
-      
+
         config.model Piggybak::ShippingMethodValue do
           visible false
           edit do
@@ -433,7 +433,7 @@ module Piggybak
             field :active
           end
         end
-      
+
         config.model Piggybak::TaxMethodValue do
           visible false
           edit do
