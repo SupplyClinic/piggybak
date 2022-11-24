@@ -33,7 +33,6 @@ module Piggybak
     validates :user_agent, presence: true
     validate :customer_appropriately_licensed, on: :create
     validate :must_have_at_least_one_item, on: :create
-    
 
     after_initialize :initialize_defaults
     validate :number_payments
@@ -599,7 +598,7 @@ module Piggybak
             line_item.errors.each do |error_name, error_value|
               self.errors.add error_name, error_value
             end
-            return false
+            throw :abort
           end
         end
       end
