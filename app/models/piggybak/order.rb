@@ -202,7 +202,7 @@ module Piggybak
               end
             else
               vendor_order_tax = tax_per_vendor["#{vendor_id}"]
-              vendor_order_tax = BigDecimal("#{vendor_order_tax}") / BigDecimal.new("1.029")
+              vendor_order_tax = BigDecimal("#{vendor_order_tax}") / Piggybak::LineItem.new.stripe_pp_rate
               vendor_order_tax = vendor_order_tax.to_f.round(2)
               vendor_order.tax = vendor_order_tax
             end
@@ -445,14 +445,6 @@ module Piggybak
       self.subtotal + self.shipment_charge + self.tax_charge
     end
 
-    def processing_fee
-      self.total * BigDecimal.new("0.029")
-    end
-
-    def total_with_processing_fee(total)
-      new_total = total / BigDecimal.new("0.971")
-    end
-
     def hidden?
       line_items = self.line_items.sellables
       vendor_orders = VendorOrder.where(piggybak_order_id: self.id)
@@ -585,10 +577,6 @@ module Piggybak
           self.total = 0;
         end
       end
-
-      # Add processing fee
-      # self.total = self.total_with_processing_fee(self.total)
-      # self.total_due = self.total_with_processing_fee(self.total_due)
 
       # Postprocess payment last
       self.line_items.payments.each do |line_item|
