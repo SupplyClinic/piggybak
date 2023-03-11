@@ -69,16 +69,18 @@ module Piggybak
 
     def post_creation_tasks
       if self.request && (self.user.enterprise_payment_method == "credit-card")
-        finalize_order
+        self.delay.finalize_order
       elsif self.request
         # possibly something else
       else
-        finalize_order
+        self.delay.finalize_order
       end
     end
 
     def finalize_order
-      if self.capture_charge
+      return unless self.capture_charge
+      return unless self.savings.nil?
+      ActiveRecord::Base.transaction do
         self.calculate_savings
         self.set_tax_info
         self.vendor_orders.each do |vendor_order|
@@ -88,20 +90,13 @@ module Piggybak
         Track.order_completed(self)
         self.update_column(:confirmation_sent,true)
         self.create_ambassador_referral_association
-
-        # more housekeeping
-        Datum.delay.process(self)
-        OrderDatum.delay.process(self)
-        self.reload
-        unless self.no_notification
-          Piggybak::Notifier.delay.order_notification(self)
-        end
-        Sunspot.index! self
-
-        if self.user
-          self.user.delay.post_order_tasks(self.subtotal)
-        end
+        self.user.delay.post_order_tasks(self.subtotal) if self.user
       end
+      unless self.no_notification
+        Piggybak::Notifier.delay.order_notification(self)
+      end
+      self.reload
+      Sunspot.index! self
     end
 
     def coupon_use
