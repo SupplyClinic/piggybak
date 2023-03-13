@@ -79,7 +79,7 @@ module Piggybak
 
     def finalize_order
       return unless self.capture_charge
-      return unless self.savings.nil?
+      return if self.confirmation_sent
       ActiveRecord::Base.transaction do
         self.calculate_savings
         self.set_tax_info
