@@ -119,7 +119,7 @@ module Piggybak
     end
 
     def savings
-      savings = BigDecimal.new("0")
+      savings = BigDecimal('0')
       items.each do |item|
         qty = item[:quantity]
         unit_price = item[:sellable].price

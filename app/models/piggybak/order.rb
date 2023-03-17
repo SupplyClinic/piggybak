@@ -43,7 +43,7 @@ module Piggybak
     before_destroy :destroy_all_children
 
     def self.calculate_savings_from_line_items(line_items)
-      calc_savings = BigDecimal.new("0")
+      calc_savings = BigDecimal('0')
       line_items.each do |line_item|
         qty = line_item.quantity
         price = line_item.price
@@ -154,7 +154,7 @@ module Piggybak
         if tax_per_vendor.has_key? "details"
           self.update_column(:tax_details, tax_per_vendor["details"])
           if tax_per_vendor["details"].has_key? "supply_clinic_tax"
-            self.update_column(:sc_tax, BigDecimal.new(tax_per_vendor["details"]["supply_clinic_tax"]))
+            self.update_column(:sc_tax, BigDecimal(tax_per_vendor["details"]["supply_clinic_tax"]))
           end
         end
       end
@@ -177,7 +177,7 @@ module Piggybak
                 vendor_tax = 0
                 sc_handles_tax = true
               else
-                vendor_tax = BigDecimal.new(vendor_tax_details["subtotal"])
+                vendor_tax = BigDecimal(vendor_tax_details["subtotal"])
                 sc_handles_tax = false
               end
               vendor_order.tax = vendor_tax
@@ -190,7 +190,7 @@ module Piggybak
                     sellable_id = item_tax_info["sellable_id"].to_i
                     line_item = self.line_items.find_by(sellable_id: sellable_id)
                     if line_item
-                      line_item.update(unit_tax: BigDecimal.new(item_tax_info["unit_tax"]))
+                      line_item.update(unit_tax: BigDecimal(item_tax_info["unit_tax"]))
                     end
                   end
                 end
