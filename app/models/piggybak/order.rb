@@ -38,7 +38,6 @@ module Piggybak
     validate :number_payments
     before_save :postprocess_order, :update_status, :set_new_record
     after_save :record_order_note
-    after_commit :post_creation_tasks, on: :create
     after_commit :create_ledger_line_item
     before_destroy :destroy_all_children
 
@@ -69,11 +68,11 @@ module Piggybak
 
     def post_creation_tasks
       if self.request && (self.user.enterprise_payment_method == "credit-card")
-        self.delay.finalize_order
+        self.finalize_order
       elsif self.request
         # possibly something else
       else
-        self.delay.finalize_order
+        self.finalize_order
       end
     end
 
@@ -87,10 +86,10 @@ module Piggybak
           vendor_order.delay.post_creation_tasks
           Track.suborder_received(vendor_order)
         end
-        Track.order_completed(self)
         self.update_column(:confirmation_sent,true)
         self.create_ambassador_referral_association
         self.user.delay.post_order_tasks(self.subtotal) if self.user
+        Track.order_completed(self)
       end
       unless self.no_notification
         Piggybak::Notifier.delay.order_notification(self)
