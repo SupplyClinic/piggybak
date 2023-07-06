@@ -37,7 +37,7 @@ module Piggybak
 
     def process(order)
       return true if !self.new_record?
-      logger = Logger.new("#{Rails.root}/#{Piggybak.config.logging_file}")
+      logger = Logger.new(STDOUT)
       total_due_integer = (order.total_due * 100).to_i
       if (total_due_integer == 0)
         self.attributes = { :transaction_id => "free of charge",
