@@ -577,8 +577,8 @@ module Piggybak
         method = "postprocess_payment"
         if line_item.respond_to?("postprocess_payment")
           if !line_item.postprocess_payment
-            line_item.errors.each do |error_name, error_value|
-              self.errors.add error_name, error_value
+            line_item.errors.each do |error|
+              self.errors.add(error.attribute, error.message)
             end
             throw :abort
           end
