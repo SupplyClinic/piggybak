@@ -276,11 +276,11 @@ module Piggybak
         if line_item.line_item_type == "sellable"
           vsi = line_item.sellable.vendor_specific_item
           if vsi.purchasable?(self.user, self.shipping_address) == false
-            errors[:base].add("You can't purchase the following item due to licensing restrictions: #{vsi.item.name}")
+            errors[:base] << "You can't purchase the following item due to licensing restrictions: #{vsi.item.name}"
           else
             item = vsi.item
             if item.promo_item_purchasable?(line_item, self) == false
-              errors[:base].add(item.promo_item_error_message)
+              errors[:base] << item.promo_item_error_message
             end
           end
         end
