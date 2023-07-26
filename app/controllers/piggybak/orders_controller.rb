@@ -56,7 +56,7 @@ module Piggybak
             logger.warn "#{request.remote_ip}:#{Time.now.strftime("%Y-%m-%d %H:%M")} Order exception: #{e.inspect}"
           end
           if @order.errors.empty?
-            @order.errors[:base] << "Your order could not go through. Please try again."
+            @order.errors[:base].add('Your order could not go through. Please try again.')
           end
         end
       else
