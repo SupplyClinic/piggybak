@@ -13,7 +13,7 @@ module Piggybak
     attr_accessor :stripe_customer_id
     attr_accessor :stripe_token
 
-    
+
     def status_enum
       ["paid", "pending"]
     end
@@ -60,17 +60,19 @@ module Piggybak
                         :customer => self.stripe_customer_id,
                         :source => self.stripe_token,
                         :currency => "usd",
-                        :capture => false
+                        :capture => false,
+                        :metadata => order&.user&.metadata || {}
                       })
-          else 
+          else
             charge = Stripe::Charge.create({
                         :amount => total_due_integer,
                         :source => self.stripe_token,
                         :currency => "usd",
-                        :capture => false
+                        :capture => false,
+                        :metadata => order&.user&.metadata || {}
                       })
           end
-          
+
           self.attributes = { :transaction_id => charge.id,
                               :masked_number => charge.source.last4 }
           return true
@@ -87,13 +89,13 @@ module Piggybak
     # If encrypted credit cards are stored on the system,
     # this can be updated
     def refund
-      # TODO: Create ActiveMerchant refund integration 
+      # TODO: Create ActiveMerchant refund integration
       return
     end
 
     def details
-      if !self.new_record? 
-        return "Payment ##{self.id} (#{self.created_at.strftime("%m-%d-%Y")}): " #+ 
+      if !self.new_record?
+        return "Payment ##{self.id} (#{self.created_at.strftime("%m-%d-%Y")}): " #+
           #"$#{"%.2f" % self.total}" reference line item total here instead
       else
         return ""
@@ -103,7 +105,7 @@ module Piggybak
     validates_each :payment_method_id do |record, attr, value|
       if record.new_record?
         credit_card = ActiveMerchant::Billing::CreditCard.new(record.credit_card)
-     
+
         if !credit_card.valid?
           credit_card.errors.each do |key, value|
             if value.any? && !["first_name", "last_name", "type"].include?(key)
