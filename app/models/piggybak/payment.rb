@@ -54,6 +54,9 @@ module Piggybak
         calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
         Stripe.api_key = calculator.secret_key
         begin
+          metadata = order&.user&.metadata || {}
+          metadata[:has_only_elevated_suspicion_items] = order.only_elevated_suspicion_items?
+
           if self.stripe_customer_id
             charge = Stripe::Charge.create({
                         :amount => total_due_integer,
@@ -61,7 +64,7 @@ module Piggybak
                         :source => self.stripe_token,
                         :currency => "usd",
                         :capture => false,
-                        :metadata => order&.user&.metadata || {}
+                        :metadata => metadata
                       })
           else
             charge = Stripe::Charge.create({
@@ -69,7 +72,7 @@ module Piggybak
                         :source => self.stripe_token,
                         :currency => "usd",
                         :capture => false,
-                        :metadata => order&.user&.metadata || {}
+                        :metadata => metadata
                       })
           end
 

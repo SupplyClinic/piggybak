@@ -670,7 +670,12 @@ module Piggybak
     end
 
     def admin_label
-      "Order ##{self.id}"    
+      "Order ##{self.id}"
+    end
+
+    def only_elevated_suspicion_items?
+      metadata = line_items.sellables.map(&:metadata)
+      metadata.all? { |hash| hash[:elevated_suspicion] == true }
     end
   end
 end

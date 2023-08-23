@@ -155,5 +155,11 @@ module Piggybak
     def self.sorted_line_item_types
       Piggybak::Config.line_item_types.sort { |a, b| (a[1][:sort] || 100) <=> (b[1][:sort] || 100) }.collect { |a| a[0] }
     end
+
+    def metadata
+      {
+        elevated_suspicion: sellable&.item&.item&.elevated_suspicion
+      }
+    end
   end
 end
