@@ -111,7 +111,11 @@ module Piggybak
         charge = get_stripe_charge
         if !charge.captured
           begin
-            charge.capture
+            if charge.payment_intent.present?
+              charge.payment_intent.capture
+            else
+              charge.capture
+            end
             self.update_column(:captured,true)
           rescue Exception => e
             error_log = ["Order ##{id} failed to capture charge.",
@@ -333,7 +337,7 @@ module Piggybak
     end
 
     def stripe_charge_id
-      self.line_items.where(line_item_type: "payment").last.payment.transaction_id
+      line_items&.payments&.first&.payment&.transaction_id
     end
 
     def has_stripe_charge
@@ -341,23 +345,20 @@ module Piggybak
     end
 
     def get_stripe_charge
-      begin
-        charge = Stripe::Charge.retrieve(self.stripe_charge_id)
-      rescue Exception => e
-        unless e.message.include? "a similar object exists in live mode"
-          throw e
-        end
-        # Test charge
-        charge = Stripe::Charge.retrieve("ch_1BDhRo4bUbbiZuyOInzUjL0k")
-      end
-      charge
+      @get_stripe_charge ||= Stripe::Charge.retrieve({ id: self.stripe_charge_id, expand: ['payment_intent'] })
     end
 
     def last4
       if !self.has_stripe_charge
         return "0000"
       else
-        return self.get_stripe_charge[:source][:last4]
+        charge = get_stripe_charge
+
+        if charge.payment_intent.present?
+          charge.payment_method_details.card.last4
+        else
+          charge[:source][:last4]
+        end
       end
     end
 
@@ -365,7 +366,13 @@ module Piggybak
       if !self.has_stripe_charge
         return "none"
       else
-        return self.get_stripe_charge[:source][:brand]
+        charge = get_stripe_charge 
+
+        if charge.payment_intent.present?
+          charge.payment_method_details.card.brand
+        else
+          charge[:source][:brand]
+        end
       end
     end
 

@@ -7,12 +7,10 @@ module Piggybak
     validates :status, presence: true
     validates_presence_of :stripe_token, :on => :create
 
-
     attr_accessor :number
     attr_accessor :verification_value
     attr_accessor :stripe_customer_id
     attr_accessor :stripe_token
-
 
     def status_enum
       ["paid", "pending"]
@@ -53,31 +51,14 @@ module Piggybak
       else
         calculator = ::Piggybak::PaymentCalculator::Stripe.new(self.payment_method)
         Stripe.api_key = calculator.secret_key
-        begin
-          metadata = order&.user&.metadata || {}
-          metadata[:has_only_elevated_suspicion_items] = order.only_elevated_suspicion_items?
 
-          if self.stripe_customer_id
-            charge = Stripe::Charge.create({
-                        :amount => total_due_integer,
-                        :customer => self.stripe_customer_id,
-                        :source => self.stripe_token,
-                        :currency => "usd",
-                        :capture => false,
-                        :metadata => metadata
-                      })
-          else
-            charge = Stripe::Charge.create({
-                        :amount => total_due_integer,
-                        :source => self.stripe_token,
-                        :currency => "usd",
-                        :capture => false,
-                        :metadata => metadata
-                      })
-          end
+        begin
+          payment_intent_attributes = stripe_attributes(order: order, total: total_due_integer)
+          intent = Stripe::PaymentIntent.create(payment_intent_attributes)
+          charge = intent&.charges&.first
 
           self.attributes = { :transaction_id => charge.id,
-                              :masked_number => charge.source.last4 }
+                              :masked_number  => charge.payment_method_details.card.last4 }
           return true
         rescue Stripe::CardError, Stripe::InvalidRequestError => e
           logger.info "#{Stripe.api_key}#{e.message}"
@@ -96,26 +77,43 @@ module Piggybak
       return
     end
 
+    def stripe_attributes(order:, total:)
+      order_attrs = order_attributes(order)
+      {
+        currency: 'usd',
+        confirm: true,
+        payment_method: stripe_token,
+        capture_method: 'manual',
+        off_session: true,
+        amount: total
+      }.merge(order_attrs)
+    end
+
+    def order_attributes(order)
+      metadata = order&.user&.metadata || {}
+      metadata[:has_only_elevated_suspicion_items] = order&.only_elevated_suspicion_items?
+
+      order_attrs = {}
+      order_attrs[:metadata] = metadata
+      order_attrs[:customer] = stripe_customer_id if stripe_customer_id
+
+      if order.cvc_token.present?
+        order_attrs[:payment_method_options] = {
+          card: {
+            cvc_token: order.cvc_token
+          }
+        }
+      end
+
+      order_attrs
+    end
+
     def details
       if !self.new_record?
         return "Payment ##{self.id} (#{self.created_at.strftime("%m-%d-%Y")}): " #+
           #"$#{"%.2f" % self.total}" reference line item total here instead
       else
         return ""
-      end
-    end
-
-    validates_each :payment_method_id do |record, attr, value|
-      if record.new_record?
-        credit_card = ActiveMerchant::Billing::CreditCard.new(record.credit_card)
-
-        if !credit_card.valid?
-          credit_card.errors.each do |key, value|
-            if value.any? && !["first_name", "last_name", "type"].include?(key)
-              record.errors.add key, (value.is_a?(Array) ? value.join(', ') : value)
-            end
-          end
-        end
       end
     end
   end
