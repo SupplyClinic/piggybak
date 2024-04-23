@@ -579,6 +579,16 @@ module Piggybak
         end
       end
 
+      if user.is_supervised?
+        strategy = PaymentRules::PaidDirectly::OrderStrategy.new(user: user, order: self)
+        total_paid_directly = strategy.total_paid_directly + order_digest.directly_shipping_total + order_digest.directly_tax_total
+        self.total_due -= total_paid_directly
+      end
+
+      if total_due_to_supply_clinic.nil? || total_due > 0
+        self.total_due_to_supply_clinic = total_due
+      end
+
       # Postprocess payment last
       self.line_items.payments.each do |line_item|
         method = "postprocess_payment"

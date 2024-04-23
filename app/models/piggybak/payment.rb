@@ -38,12 +38,11 @@ module Piggybak
       logger = Logger.new(STDOUT)
       total_due_integer = (order.total_due * 100).to_i
       if (total_due_integer == 0)
-        self.attributes = { :transaction_id => "free of charge",
-                            :masked_number => "N/A" }
-        return true
-      elsif order.user && order.user.payment_method != "card"
-        self.attributes = { :transaction_id => "credit",
-                            :masked_number => "N/A" }
+        if order.user && order.user.is_supervised?
+          self.attributes = { :transaction_id => "credit", :masked_number => "N/A" }
+        else
+          self.attributes = { :transaction_id => "free of charge", :masked_number => "N/A" }
+        end
         return true
       elsif total_due_integer < 100
         self.errors.add :payment_method_id, "Supply Clinic unfortunately can't process orders less than a dollar (unless they're completely free of charge). Please adjust your cart size accordingly."
