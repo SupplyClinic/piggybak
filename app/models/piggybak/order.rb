@@ -641,11 +641,14 @@ module Piggybak
       cart.update_quantities
 
       cart.sellables.each do |line_item|
-        self.line_items << Piggybak::LineItem.new({ :sellable_id => line_item[:sellable].id,
+        self.line_items << Piggybak::LineItem.new({
+          :sellable_id => line_item[:sellable].id,
           :unit_price => line_item[:sellable].situational_price(self.user),
           :price => line_item[:sellable].situational_price(self.user)*line_item[:quantity],
           :description => line_item[:sellable].description,
-          :quantity => line_item[:quantity] })
+          :quantity => line_item[:quantity],
+          :two_day_delivery => line_item[:sellable]&.vsi&.two_day_delivery?
+        })
       end
     end
 
