@@ -480,9 +480,11 @@ module Piggybak
     def initialize_defaults
       self.recorded_changes ||= []
 
-      self.billing_address ||= Piggybak::Address.new
-      self.shipping_address ||= Piggybak::Address.new
-      self.shipping_address.is_shipping = true
+      if new_record?
+        self.billing_address ||= Piggybak::Address.new
+        self.shipping_address ||= Piggybak::Address.new
+        self.shipping_address.is_shipping = true
+      end
 
       self.ip_address ||= 'admin'
       self.user_agent ||= 'admin'
