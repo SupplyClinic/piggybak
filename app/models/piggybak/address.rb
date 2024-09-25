@@ -13,7 +13,7 @@ module Piggybak
     validates :country_id, presence: true
     validates :zip, presence: true
 
-    after_initialize :set_default_country
+    after_initialize :set_default_country, if: :new_record?
     after_save :document_address_changes
     
     attr_accessor :is_shipping
