@@ -87,7 +87,7 @@ class Piggybak::Sellable < ActiveRecord::Base
       new_quantity = 0
     end
     if new_quantity == 0
-      self.vendor_specific_item.set_backorder(new_quantity)
+      self.vendor_specific_item.set_backorder(new_quantity, false)
     end
     self.update_attribute(:quantity, new_quantity)
   end
