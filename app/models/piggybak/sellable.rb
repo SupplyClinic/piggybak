@@ -89,6 +89,7 @@ class Piggybak::Sellable < ActiveRecord::Base
     if new_quantity == 0
       self.vendor_specific_item.set_backorder(new_quantity, false)
     end
+    self&.vendor_specific_item&.sync_to_netsuite
     self.update_attribute(:quantity, new_quantity)
   end
 
