@@ -118,9 +118,7 @@ module Piggybak
             end
             self.update_column(:captured,true)
           rescue Exception => e
-            error_log = ["Order ##{id} failed to capture charge.",
-                          "Error: #{e.message}"]
-            AdminMailer.logs_email(promo_logs, "dan@supplyclinic.com").deliver
+            AdminMailer.order_failed_to_capture(order: self, error: e).deliver_now
             return false
           end
         elsif !self.captured
