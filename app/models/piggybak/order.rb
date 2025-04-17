@@ -1,5 +1,7 @@
 module Piggybak
   class Order < ActiveRecord::Base
+    enum authorization_status: { unauthorized: 0, partially_authorized: 1, fully_authorized: 2 }
+
     has_many :line_items, :inverse_of => :order
     has_many :order_notes, :inverse_of => :order
 
