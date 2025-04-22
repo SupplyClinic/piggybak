@@ -92,17 +92,17 @@ module Piggybak
     end
 
     def postprocess_payment
-      return true if !self.new_record?
+      return true unless self.new_record?
 
       if self.payment.process(self.order)
         self.price = -1*self.order.total_due
         self.order.total_due = 0
-        return true
+        true
       else
         self.payment.errors.each do |error|
           self.errors.add(error.attribute, error.message)
         end
-        return false
+        false
       end
     end
 

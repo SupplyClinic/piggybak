@@ -80,7 +80,9 @@ module Piggybak
 
     def finalize_order
       return unless self.capture_charge
+
       return if self.confirmation_sent
+
       ActiveRecord::Base.transaction do
         self.calculate_savings
         self.set_tax_info
@@ -103,7 +105,7 @@ module Piggybak
     def coupon_use
       self.line_items.find_by(line_item_type: "coupon_application")
     end
- 
+
     def capture_charge
       if !self.has_stripe_charge
         if !self.captured
@@ -112,22 +114,41 @@ module Piggybak
       else
         charge = get_stripe_charge
         if !charge.captured
-          begin
-            if charge.payment_intent.present?
-              charge.payment_intent.capture
-            else
-              charge.capture
-            end
-            self.update_column(:captured,true)
-          rescue Exception => e
-            AdminMailer.order_failed_to_capture(order: self, error: e).deliver_now
-            return false
+          if self.fully_authorized?
+            self.fully_capture_charge(charge)
+          elsif self.partially_authorized?
+            self.partially_capture_charge(charge)
+          else
+            false
           end
         elsif !self.captured
-          self.update_column(:captured,true)
+          self.update_column(:captured, true)
         end
       end
-      return true
+    end
+
+    def fully_capture_charge(charge)
+      if charge.payment_intent.present?
+        charge.payment_intent.capture
+      else
+        charge.capture
+      end
+
+      self.update_column(:captured, true)
+    rescue Exception => e
+      AdminMailer.order_failed_to_capture(order: self, error: e).deliver_now
+      return false
+    end
+
+    def partially_capture_charge(charge)
+      payment_intent = charge.payment_intent
+      raise "Stripe::PaymentIntent not found for Order #{self.sc_code}" unless payment_intent.present?
+
+      payment_intent.capture(amount: Util::Money.to_cents(self.total))
+      self.update_column(:captured, true)
+    rescue Exception => e
+      AdminMailer.order_failed_to_capture(order: self, error: e).deliver_now
+      return false
     end
 
     def is_first_order
@@ -614,6 +635,39 @@ module Piggybak
 
       if self.recorded_changes.any? && !self.disable_order_notes
         OrderNote.create(:order_id => self.id, :note => self.recorded_changes.join("<br />"), :user_id => self.recorded_changer.to_i)
+      end
+    end
+
+    def calculate_totals
+      self.total_due = 0
+      self.total = 0
+
+      self.line_items.each do |line_item|
+        if !line_item._destroy && line_item.line_item_type != "coupon_application"
+          self.total_due += line_item.price
+          if line_item.line_item_type != "payment"
+            self.total += line_item.price
+          end
+        end
+      end
+
+      if self.total_due > 0 && self.total > 0
+        self.line_items.each do |line_item|
+          if !line_item._destroy && line_item.line_item_type == "coupon_application"
+            self.total_due += line_item.price
+            if line_item.line_item_type != "payment"
+              self.total += line_item.price
+            end
+          end
+        end
+
+        if self.total_due < 0
+          self.total_due = 0;
+        end
+
+        if self.total < 0
+          self.total = 0;
+        end
       end
     end
 
