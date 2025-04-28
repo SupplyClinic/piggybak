@@ -297,16 +297,14 @@ module Piggybak
     end
 
     def customer_appropriately_licensed
-      line_items.each do |line_item|
-        if line_item.line_item_type == "sellable"
-          vsi = line_item.sellable.vendor_specific_item
-          if vsi.purchasable?(self.user, self.shipping_address) == false
-            errors.add(:base, "You can't purchase the following item due to licensing restrictions: #{vsi.item.name}")
-          else
-            item = vsi.item
-            if item.promo_item_purchasable?(line_item, self) == false
-              errors.add(:base, item.promo_item_error_message)
-            end
+      line_items.sellables.each do |line_item|
+        vsi = line_item.sellable.vendor_specific_item
+        if vsi.purchasable?(self.user, self.shipping_address) == false
+          errors.add(:base, "You can't purchase the following item due to licensing restrictions: #{vsi.item.name}")
+        else
+          item = vsi.item
+          if item.promo_item_purchasable?(line_item, self) == false
+            errors.add(:base, item.promo_item_error_message)
           end
         end
       end
@@ -468,26 +466,11 @@ module Piggybak
     end
 
     def hidden?
-      line_items = self.line_items.sellables
-      vendor_orders = VendorOrder.where(piggybak_order_id: self.id)
-      line_items.each do |line_item|
-        if !line_item.sellable.item.hidden?
-          return false
-        end
-      end
-      return true
+      self.line_items.sellables.all? { |li| li.sellable.item.hidden? }
     end
 
     def num_hidden
-      num_hidden = 0;
-      line_items = self.line_items.sellables
-      vendor_orders = VendorOrder.where(piggybak_order_id: self.id)
-      line_items.each do |line_item|
-        if line_item.sellable.item.hidden?
-          num_hidden = num_hidden + 1
-        end
-      end
-      num_hidden
+      self.line_items.sellables.count { |li| li.sellable.item.hidden? }
     end
 
     def destroy_all_children
@@ -564,7 +547,7 @@ module Piggybak
       end
 
       # Postprocess everything but payments first
-      self.line_items.each do |line_item|
+      self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
         next if line_item.line_item_type == "payment"
         method = "postprocess_#{line_item.line_item_type}"
         if line_item.respond_to?(method)
@@ -575,32 +558,7 @@ module Piggybak
       end
 
       # Recalculating total and total due, in case post process changed totals
-      self.total_due = 0
-      self.total = 0
-      self.line_items.each do |line_item|
-        if !line_item._destroy && line_item.line_item_type != "coupon_application"
-          self.total_due += line_item.price
-          if line_item.line_item_type != "payment"
-            self.total += line_item.price
-          end
-        end
-      end
-      if self.total_due > 0 && self.total > 0
-        self.line_items.each do |line_item|
-          if !line_item._destroy && line_item.line_item_type == "coupon_application"
-            self.total_due += line_item.price
-            if line_item.line_item_type != "payment"
-              self.total += line_item.price
-            end
-          end
-        end
-        if self.total_due < 0
-          self.total_due = 0;
-        end
-        if self.total < 0
-          self.total = 0;
-        end
-      end
+      self.calculate_totals
 
       if user.is_supervised?
         strategy = PaymentRules::PaidDirectly::OrderStrategy.new(user: user, order: self)
@@ -642,20 +600,20 @@ module Piggybak
       self.total_due = 0
       self.total = 0
 
-      self.line_items.each do |line_item|
-        if !line_item._destroy && line_item.line_item_type != "coupon_application"
+      self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
+        if !line_item._destroy && line_item.line_item_type != 'coupon_application'
           self.total_due += line_item.price
-          if line_item.line_item_type != "payment"
+          if line_item.line_item_type != 'payment'
             self.total += line_item.price
           end
         end
       end
 
       if self.total_due > 0 && self.total > 0
-        self.line_items.each do |line_item|
-          if !line_item._destroy && line_item.line_item_type == "coupon_application"
+        self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
+          if !line_item._destroy && line_item.line_item_type == 'coupon_application'
             self.total_due += line_item.price
-            if line_item.line_item_type != "payment"
+            if line_item.line_item_type != 'payment'
               self.total += line_item.price
             end
           end
