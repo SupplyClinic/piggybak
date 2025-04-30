@@ -604,11 +604,8 @@ module Piggybak
         total: 0
       }
 
-      line_items = if exclude_rejected_sellables
-                     self.line_items.where.not(line_item_type: 'rejected_sellable')
-                   else
-                     self.line_items
-                   end
+      line_items = self.line_items.to_a
+      line_items = line_items.reject { _1.line_item_type == 'rejected_sellable' } if exclude_rejected_sellables
 
       line_items.each do |line_item|
         if !line_item._destroy && line_item.line_item_type != 'coupon_application'
