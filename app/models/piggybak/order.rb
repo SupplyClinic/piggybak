@@ -558,7 +558,9 @@ module Piggybak
       end
 
       # Recalculating total and total due, in case post process changed totals
-      self.calculate_totals
+      totals = self.calculate_totals
+      self.total_due = totals[:total_due]
+      self.total = totals[:total]
 
       if user.is_supervised?
         strategy = PaymentRules::PaidDirectly::OrderStrategy.new(user: user, order: self)
@@ -596,37 +598,38 @@ module Piggybak
       end
     end
 
-    def calculate_totals
-      self.total_due = 0
-      self.total = 0
+    def calculate_totals(exclude_rejected_sellables: true)
+      result = {
+        total_due: 0,
+        total: 0
+      }
 
-      self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
+      line_items = if exclude_rejected_sellables
+                     self.line_items.where.not(line_item_type: 'rejected_sellable')
+                   else
+                     self.line_items
+                   end
+
+      line_items.each do |line_item|
         if !line_item._destroy && line_item.line_item_type != 'coupon_application'
-          self.total_due += line_item.price
-          if line_item.line_item_type != 'payment'
-            self.total += line_item.price
-          end
+          result[:total_due] += line_item.price
+          result[:total] += line_item.price if line_item.line_item_type != 'payment'
         end
       end
 
-      if self.total_due > 0 && self.total > 0
-        self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
+      if result[:total_due] > 0 && result[:total] > 0
+        line_items.each do |line_item|
           if !line_item._destroy && line_item.line_item_type == 'coupon_application'
-            self.total_due += line_item.price
-            if line_item.line_item_type != 'payment'
-              self.total += line_item.price
-            end
+            result[:total_due] += line_item.price
+            result[:total] += line_item.price
           end
         end
 
-        if self.total_due < 0
-          self.total_due = 0;
-        end
-
-        if self.total < 0
-          self.total = 0;
-        end
+        result[:total_due] = 0 if result[:total_due] < 0
+        result[:total] = 0 if result[:total] < 0
       end
+
+      result
     end
 
     def create_payment_shipment
