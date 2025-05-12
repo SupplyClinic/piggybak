@@ -186,7 +186,7 @@ module Piggybak
 
     def create_vendor_orders
       if !self.vendor_orders.any?
-        items_by_vendor_id = VendorOrder.items_by_vendor_id(self)
+        items_by_vendor_id = self.items_by_vendor_id
         digest = OrderDigest.find(self.order_digest_id)
         tax_per_vendor = digest.tax
 
