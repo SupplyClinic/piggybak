@@ -547,7 +547,7 @@ module Piggybak
       end
 
       # Postprocess everything but payments first
-      self.line_items.where.not(line_item_type: 'rejected_sellable').each do |line_item|
+      self.line_items.reject { _1.line_item_type == 'rejected_sellable' }.each do |line_item|
         next if line_item.line_item_type == "payment"
         method = "postprocess_#{line_item.line_item_type}"
         if line_item.respond_to?(method)
