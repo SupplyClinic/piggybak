@@ -142,6 +142,9 @@ module Piggybak
 
     def partially_capture_charge(charge)
       payment_intent = charge.payment_intent
+
+      return true if self.total.zero? || payment_intent.status == 'canceled'
+
       raise "Stripe::PaymentIntent not found for Order #{self.sc_code}" unless payment_intent.present?
 
       payment_intent.capture(amount: Util::Money.to_cents(self.total))
