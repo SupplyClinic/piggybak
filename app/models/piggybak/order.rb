@@ -302,8 +302,8 @@ module Piggybak
     def customer_appropriately_licensed
       line_items.sellables.each do |line_item|
         vsi = line_item.sellable.vendor_specific_item
-        if vsi.purchasable?(self.user, self.shipping_address) == false
-          errors.add(:base, "You can't purchase the following item due to licensing restrictions: #{vsi.item.name}")
+        if !vsi.purchasable?(self.user, self.shipping_address) && !self.user.licensed_to_start_order?
+          errors.add(:base, "You can't purchase the following items due to licensing restrictions: #{vsi.item.name}")
         else
           item = vsi.item
           if item.promo_item_purchasable?(line_item, self) == false
@@ -315,7 +315,7 @@ module Piggybak
 
     def must_have_at_least_one_item
       if line_items.sellables.size < 1
-        errors.add(:base, "An error occured processing this order. It's possible that a duplicate order was attempted")
+        errors.add(:base, "An error occurred processing this order. It's possible that a duplicate order was attempted")
       end
     end
 
