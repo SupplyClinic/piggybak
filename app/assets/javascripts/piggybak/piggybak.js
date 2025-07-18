@@ -4,7 +4,7 @@ var page_load = 1;
 var shipping_field;
 
 $(function() {
-	if($('form#new_order').size() == 0) {
+	if($('form#new_order').length === 0) {
 		return;
 	}
 	shipping_field = $('#order_line_items_attributes_0_shipment_attributes_shipping_method_id');
@@ -29,18 +29,20 @@ var piggybak = {
 		$(document).on('change', piggybak.shipping_els, function() {
 			piggybak.update_shipping_options($(this));
 		});
+
 		$(document).on('change', '#order_billing_address_attributes_state_id', function() {
 			piggybak.update_tax();
 		});
+
 		$('#shipping select').change(function() {
 			piggybak.update_totals();
 		});
+
 		$('#shipping_address #copy').on('click', function() {
 			piggybak.copy_from_billing();
 			piggybak.update_shipping_options($('#order_shipping_address_attributes_state_id'));
 			return false;
 		});
-		return;
 	},
 	copy_from_billing: function() {
 		$('#billing_address input').each(function(i, j) {
