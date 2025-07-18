@@ -333,7 +333,7 @@ $.extend($.validator, {
 				.validateDelegate("[type='radio'], [type='checkbox'], select, option", "click", delegate);
 
 			if (this.settings.invalidHandler) {
-				$(this.currentForm).bind("invalid-form.validate", this.settings.invalidHandler);
+				$(this.currentForm).on("invalid-form.validate", this.settings.invalidHandler);
 			}
 		},
 
@@ -1158,7 +1158,7 @@ $.extend($.validator, {
 			// TODO find a way to bind the event just once, avoiding the unbind-rebind overhead
 			var target = $(param);
 			if (this.settings.onfocusout) {
-				target.unbind(".validate-equalTo").bind("blur.validate-equalTo", function() {
+				target.off(".validate-equalTo").on("blur.validate-equalTo", function() {
 					$(element).valid();
 				});
 			}
@@ -1208,42 +1208,14 @@ $.format = $.validator.format;
 }(jQuery));
 
 // provides cross-browser focusin and focusout events
-// IE has native support, in other browsers, use event caputuring (neither bubbles)
+// IE has native support, in other browsers, use event capturing (neither bubbles)
 
 // provides delegate(type: String, delegate: Selector, handler: Callback) plugin for easier event delegation
 // handler is only called when $(event.target).is(delegate), in the scope of the jquery-object for event.target
 (function($) {
-	// only implement if not provided by jQuery core (since 1.4)
-	// TODO verify if jQuery 1.4's implementation is compatible with older jQuery special-event APIs
-	if (!jQuery.event.special.focusin && !jQuery.event.special.focusout && document.addEventListener) {
-		$.each({
-			focus: 'focusin',
-			blur: 'focusout'
-		}, function( original, fix ){
-			$.event.special[fix] = {
-				setup:function() {
-					this.addEventListener( original, handler, true );
-				},
-				teardown:function() {
-					this.removeEventListener( original, handler, true );
-				},
-				handler: function(e) {
-					var args = arguments;
-					args[0] = $.event.fix(e);
-					args[0].type = fix;
-					return $.event.handle.apply(this, args);
-				}
-			};
-			function handler(e) {
-				e = $.event.fix(e);
-				e.type = fix;
-				return $.event.handle.call(this, e);
-			}
-		});
-	}
 	$.extend($.fn, {
 		validateDelegate: function(delegate, type, handler) {
-			return this.bind(type, function(event) {
+			return this.on(type, function(event) {
 				var target = $(event.target);
 				if (target.is(delegate)) {
 					return handler.apply(target, arguments);
