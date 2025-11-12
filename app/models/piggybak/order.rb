@@ -88,7 +88,6 @@ module Piggybak
         self.set_tax_info
         self.vendor_orders.each do |vendor_order|
           vendor_order.delay.post_creation_tasks
-          Track.suborder_received(vendor_order)
         end
         self.update_column(:confirmation_sent,true)
         self.create_ambassador_referral_association
