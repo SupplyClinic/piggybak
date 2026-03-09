@@ -33,7 +33,7 @@ module Piggybak
     validates :created_at, presence: true
     validates :ip_address, presence: true
     validates :user_agent, presence: true
-    validates :paid, presence: true
+    validates :paid, inclusion: [true, false]
     validate :customer_appropriately_licensed, on: :create
     validate :must_have_at_least_one_item, on: :create
 
