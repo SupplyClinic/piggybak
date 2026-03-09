@@ -29,6 +29,8 @@ module Piggybak
     end
 
     def preprocess
+      return if self.order&.paid
+
       # TODO: Investigate if this is unnecessary if you use reject_if on accepts_nested_attributes_for
       Piggybak.config.line_item_types.each do |k, v|
         if v.has_key?(:nested_attrs) && k != self.line_item_type.to_sym
@@ -97,6 +99,7 @@ module Piggybak
       if self.payment.process(self.order)
         self.price = -1*self.order.total_due
         self.order.total_due = 0
+        self.order.paid = true
         true
       else
         self.payment.errors.each do |error|

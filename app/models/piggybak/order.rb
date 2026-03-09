@@ -33,6 +33,7 @@ module Piggybak
     validates :created_at, presence: true
     validates :ip_address, presence: true
     validates :user_agent, presence: true
+    validates :paid, presence: true
     validate :customer_appropriately_licensed, on: :create
     validate :must_have_at_least_one_item, on: :create
 
@@ -525,6 +526,7 @@ module Piggybak
     end
 
     def postprocess_order_actions
+      return if paid
       # Mark line items for destruction if quantity == 0
       self.line_items.each do |line_item|
         if line_item.quantity == 0
